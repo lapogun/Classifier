@@ -14,7 +14,7 @@ public class BayesClassifier {
 	Map<String, Integer> totals;
 	Map<String, HashMap<String, Float>> prob;
 	String[] categories;
-	MODE mode = MODE.RUNNING;
+	MODE mode = MODE.DEBUG;
 	
 	public BayesClassifier(String trainingDir, String stopwordList) {
 		vocabulary = new HashMap<String, Integer>();
@@ -59,6 +59,7 @@ public class BayesClassifier {
 		for(String category : this.categories) {
 			System.out.println("	" + category);
 			int denominator = totals.get(category) + vocabLen;
+			//System.out.println(denominator);
 			HashMap<String, Float> count = prob.get(category);
 			for(Map.Entry entry : this.vocabulary.entrySet()) {
 				String word = (String)entry.getKey();
@@ -115,7 +116,7 @@ public class BayesClassifier {
 		};
 		String[] files = dir.list(filter);
 		int total = 0;
-		HashMap<String, Float> count = new HashMap<String, Float>();
+		HashMap<String, Float> counts = new HashMap<String, Float>();
 		for(String file: files) {
 			Scanner in = null;
 			try {
@@ -124,7 +125,7 @@ public class BayesClassifier {
 					String line = in.next();
 					String[] tokens = line.split(" ");
 					for(String token: tokens) {
-						token = token.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
+						token = token.replaceAll("['\".,?:-]", "").toLowerCase();
 						if(token != "" && !this.stopwords.contains(token)) {
 							total++;
 							if(!this.vocabulary.containsKey(token)) {
@@ -133,11 +134,11 @@ public class BayesClassifier {
 								int times = this.vocabulary.get(token);
 								this.vocabulary.put(token, times+1);
 							}
-							if(!count.containsKey(token)) {
-								count.put(token, (float) 1);
+							if(!counts.containsKey(token)) {
+								counts.put(token, (float) 1);
 							} else {
-								Float times = count.get(token);
-								count.put(token, times+1);
+								Float times = counts.get(token);
+								counts.put(token, times+1);
 							}
 						}
 					}
@@ -151,7 +152,7 @@ public class BayesClassifier {
 			}
 		}
 		this.totals.put(category, total);
-		this.prob.put(category, count);
+		this.prob.put(category, counts);
 	}
 
 	public String classify(String filename) {
@@ -171,7 +172,7 @@ public class BayesClassifier {
 				String line = in.next();
 				String[] tokens = line.split(" ");
 				for(String token : tokens) {
-					token = token.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
+					token = token.replaceAll("['\".,?:-]", "").toLowerCase();
 					if(this.vocabulary.containsKey(token)) {
 						for(String category : this.categories) {
 							HashMap<String, Float> count = this.prob.get(category);
@@ -180,8 +181,8 @@ public class BayesClassifier {
 								System.out.println(token);
 							}
 							float tmp = results.get(category);
-							//tmp += java.lang.Math.log(p + 0.0001);
-							tmp += p;
+							tmp += java.lang.Math.log(p + 0.0001);
+							//tmp += p;
 							results.put(category, tmp);
 						}
 					}
@@ -193,7 +194,7 @@ public class BayesClassifier {
 			if(in != null) in.close();
 		}
 		String result = "";
-		float times = Float.MIN_VALUE;
+		float times = Float.NEGATIVE_INFINITY;
 		for(Map.Entry entry : results.entrySet()) {
 			if((Float) entry.getValue() > times) {
 				times = (Float) entry.getValue();
