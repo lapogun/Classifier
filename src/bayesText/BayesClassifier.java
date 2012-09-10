@@ -3,6 +3,8 @@ package bayesText;
 import java.io.*;
 import java.util.*;
 
+import utils.Utils;
+
 enum MODE {
 	DEBUG, RUNNING
 }
@@ -17,12 +19,12 @@ public class BayesClassifier {
 	MODE mode = MODE.DEBUG;
 	
 	public BayesClassifier(String trainingDir, String stopwordList) {
-		vocabulary = new HashMap<String, Integer>();
-		stopwords = new ArrayList<String>();
-		totals = new HashMap<String, Integer>();
-		prob = new HashMap<String, HashMap<String, Float>>();
+		this.vocabulary = new HashMap<String, Integer>();
+		this.stopwords = new ArrayList<String>();
+		this.totals = new HashMap<String, Integer>();
+		this.prob = new HashMap<String, HashMap<String, Float>>();
 		
-		loadStopword(stopwordList);
+		this.stopwords = Utils.loadStopword(stopwordList);
 		File dir = new File(trainingDir);
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -70,32 +72,6 @@ public class BayesClassifier {
 				count.put(word, (float)((c+1.0)/denominator));
 			}
 			prob.put(category, count);
-		}
-	}
-
-	public void loadStopword(String stopwordList) {
-		if(stopwordList == null) {
-			System.out.println("stopwordList is empty.");
-			return;
-		}
-		Scanner in = null;
-		int count = 0;
-		try {
-			in = new Scanner(new File(stopwordList));
-			while (in.hasNext()) {
-				count++;
-				String line = in.next();
-				this.stopwords.add(line.trim());
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} finally {
-			if (in != null)
-				in.close();
-		}
-		if(this.mode == MODE.DEBUG) {
-			System.out.println("DEBUG: Stopword count done!");
-			System.out.println("DEBUG: Stopword count: " + count);
 		}
 	}
 	
